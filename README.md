@@ -34,3 +34,7 @@ fn main() -> io::Result<()> {
 ```
 
 ## Example 2: Using Memory-Mapped Files for Inter-Process Communication (IPC)
+
+Memory-mapped files can be used for efficient data sharing between processes. This example sets up a simple IPC mechanism where one process writes data to a shared memory area, and another process reads it.
+
+### Writer Process
