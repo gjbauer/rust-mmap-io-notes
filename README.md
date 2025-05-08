@@ -59,7 +59,7 @@ let file = OpenOptions::new()
 
   let mut mmap = unsafe { MmapMut::map_mut(&File)? };
 
-  mmap[..message.len90].copy_from_slice(message);
+  mmap[..message.len()].copy_from_slice(message);
 
   mmap.flush()?;
 
