@@ -49,11 +49,11 @@ fn main() -> io::Result<()> {
 
   let message = b"IPC using mmap in Rust!";
 
-let file = OpenOptions::new()
-  .read(true)
-  .write(true)
-  .create(true)
-  .open(file_path)?;
+  let file = OpenOptions::new()
+    .read(true)
+    .write(true)
+    .create(true)
+    .open(file_path)?;
 
   file.set_len(message.len() as u64)?;
 
@@ -88,5 +88,116 @@ fn main() -> io::Result<()> {
   println!("Read from shared memory: {:?}", message);
 
   Ok(())
+}
+```
+
+## Example 3: Modifying a Memory-Mapped File
+
+This example shows how to modify part of a memory-mapped file, demonstrating an in-place update.
+
+```
+use memmap2::MmapMut;
+use std::fs::OpenOptions;
+use std::io;
+
+fn main() -> io::Result<()> {
+  let file_path = "example.dat";
+
+  let file = OpenOptions::new()
+    .read(true)
+    .write(true)
+    .open(file_path)?;
+  let mut mmap = unsafe { MmapMut::map_mut(&file)? };
+
+  // Modify a portion of the mapped memory
+  //let new_data = b"Rust";
+
+  for (i, byte) in new_data.iter().enumerate() {
+    mmap[i] = *byte;
+  }
+
+  mmap.flush()?;
+
+  println!("Memory-mapped file updated.");
+
+  Ok(())
+}
+
+```
+
+### Notes
+  * The `unsafe` block is necessary for memory-mapped operations because they involve direct manipulation of memory, which can lead to undefined behavior if not used carefully.
+  * Always ensure that the file size is adequate for the operations you intend to perform. Trying to access memory outside the bounds of the mapped file can cause your program to crash.
+  * Remember to handle errors and edge cases in a real-world application, such as checking if the file exists before attempting to read from it or ensuring that file modifications do not exceed the file size.
+
+## Example 4: Concurrently Reading from a Memory-Mapped File
+
+Memory-mapped files can be efficiently used by multiple threads to read data concurrently due to the way the operating system handles page caching. Here's an example that demonstrates concurrent reads:
+
+```
+use memmap2::Mmap;
+use std::fs::File;
+use std::io;
+use std::sync::Arc;
+use std::thread;
+
+fn main() -> io::Result<()> {
+  let file = File::open("example.dat")?;
+
+  let mmap = unsafe { Mmap::map(&file)? };
+
+  let mmap_arc = Arc::new(mmap);
+
+  let mut handles = vec![];
+
+  for _ in 0..4 {
+    let mmap_clone = Arc::clone(&mmap_arc);
+    let handle = thread::spawn(move || {
+      // Each thread reads from the memory-mapped file
+      let data = &mmap_clone[0..10];  // Example: Read first 10 bytes
+      println!("Thread read: {:?}", data);
+    });
+
+    handles.push(handle);
+  }
+
+  for handle in handles {
+    handle.join().unwrap();
+  }
+
+  Ok(())
+}
+```
+
+## Example 5: Using Memory-Mapped Files for Efficient Large Data Manipulation
+
+Memory-mapped files are particularly useful for working with large data sets, as they allow for random access without loading the entire file into memory. Here's an example that manipulates a large file:
+
+```
+use memmap2::MmapMut;
+use std::fs::OpenOptions;
+use std::io;
+
+fn manipulate_large_file(file_path: &str) -> io::Result<()> {
+  let file = OpenOptions::new()
+    .read(true)
+    .write(true)
+    .open(file_path)?;
+
+  let mut mmap = unsafe { MmapMut::map_mut(&file)? };
+
+  // Example manipulation: zero out every other byte in a large file
+  for i in (0..map.len()).step_by(2) {
+    mmap[i] = 0;
+  }
+
+  mmap.flush()?; // Ensure changes are written back to the file
+
+  Ok(())
+}
+
+fn main() -> io::Result<()> {
+  let file_path = "large_sample.dat";
+  manipulate_large_file(file_path);
 }
 ```
