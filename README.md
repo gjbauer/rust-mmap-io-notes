@@ -230,7 +230,7 @@ impl RingBuffer {
 
     let mmap = unsafe { MmapMut::map_mut(&file)? };
 
-    Od(Self {
+    Ok(Self {
       mmap,
       capacity: size,
       head: 0,
